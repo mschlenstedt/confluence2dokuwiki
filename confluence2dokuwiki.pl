@@ -323,7 +323,6 @@ if ($move_main_to_sub) {;
 			my @suffixes = (".txt");   
 			my ($filename,$path,$suffix) = fileparse($fields[0], @suffixes);
 			if (-d "$path$filename" && !-e "$path$filename/$name_mainpage") { # ns with equal name to file exists -> subpages
-			#if (-d "$path$filename" && !-e "$path$filename/$name_mainpage") { # ns with equal name to file exists -> subpages
 				my $newfile = "$path$filename/$name_mainpage";
 				print "Found sub-namespace: Move $path$filename/$filename$suffix to $newfile\n";
 				my @ns = split (/\//, $newfile);
