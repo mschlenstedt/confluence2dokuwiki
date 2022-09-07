@@ -1,0 +1,7 @@
+$line = "Hast Du nicht gesehen dass {{plugins:1215135927.jpg?w=179}} dass es hier zwischendurch  {{plugins:1215135928.jpg?w=179}} auch noch weitergeht {{plugins:1215135925.jpg?h=150}} und hier das Ende {{plugins:1215135926.jpg?w=179}} vielleich tbald kommt {{plugins:1215135924.jpg?h=150}} aber es hier noch weitergeht";
+
+while($line =~ m/([^\{\}]*)(\{\{[^\}]*\}\})([^\{\}]*)/g ) {
+	print "Teil 1 $1\n";
+	print "Teil 2 $2\n";
+	print "Teil 3 $3\n";
+}
