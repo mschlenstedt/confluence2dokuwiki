@@ -4,6 +4,7 @@ use utf8;
 use Encode qw(decode encode);
 use Text::Unidecode;
 use File::Basename;
+use Data::Dumper;
 
 ##############################################################
 # START Settings
@@ -23,6 +24,17 @@ my $tocname = "Inhalt";
 
 # Remove Attachement Section created by Confluence Export routine
 my $remove_attachementsec = 1;
+
+# Correct all wiki internal links to new location
+# (if disabled, all internal links will point to the html
+# file from the confluence export)
+my $correct_internal_links = 1;
+
+# Move main pages to (sub-)namespaces with equal name
+# This is useful if you used confluence subpages. You main page
+# will then be moved to the sub-namespace.
+my $move_main_to_sub = 1;
+my $name_mainpage = "start.txt";
 
 ##############################################################
 # END Settings
@@ -266,7 +278,7 @@ foreach my $inputfile (@files) {
 	system ("mkdir -p  ./pages/$dw_ns_path");
 	system("cp $outputfile ./pages/$dw_ns_path/$outputfilenew.txt");
 	unlink ($outputfile);
-	#	unlink ($tmpfile);
+	unlink ($tmpfile);
 
 	# Create path with namespaces for media and copy media
 	if (-e $path . "attachments/$confl_pageid") {
@@ -277,7 +289,7 @@ foreach my $inputfile (@files) {
 	}
 
 	# "Register" file for later on internal link correction
-	open(FILE, ">>", "linkdatabase.dat") or die("Could not open linkdatabase.dat");
+	open(FILE, '>>', "linkdatabase.dat") or die("Could not open linkdatabase.dat");
 		print FILE "./pages/$dw_ns/$outputfilenew.txt" . "|" . $filename . $suffix . "|" . "$dw_ns" . ":" . "$outputfilenew.txt\n";
 	close (FILE);
 	
@@ -285,6 +297,109 @@ foreach my $inputfile (@files) {
 	
 
 } # End Loop through all files
+
+# Correct now some things we only can start if whole new files and filestructure exists
+
+# Move main pages to sub-namespaces and rename to e.g. start.txt
+if ($move_main_to_sub) {;
+	
+	open(LINKS, '+<', "linkdatabase.dat") or die("Could not open linkdatabase.dat");
+		binmode LINKS, ':encoding(UTF-8)';
+
+		my @lines = <LINKS>;
+		seek LINKS, 0, 0;
+		truncate LINKS, 0;
+
+		foreach $line (@lines)  {
+
+			$line =~ s/\n//;
+			my @fields = split (/\|/, $line);
+			my @suffixes = (".txt");   
+			my ($filename,$path,$suffix) = fileparse($fields[0], @suffixes);
+			if (-d "$path$filename") { # ns with equal name to file exists -> subpages
+				my $newfile = "$path$filename/$name_mainpage";
+				print "Found sub-namespace: Move $path$filename/$filename$suffix to $newfile\n";
+				my @ns = split (/\//, $newfile);
+				my $ns;
+				foreach (@ns) { # Create new ns
+					next if $_ =~ m/^pages$/ || $_ =~ m/\./ || $_ =~ m/\.txt$/;
+					$ns .= "$_:";
+				}
+				system("mv $path$filename$suffix $newfile");
+				print LINKS "$newfile|@fields[1]|$ns$name_mainpage\n";
+				# Move and correct attachements
+				open(PAGE, '+<', "$newfile") or die("Could not open $newfile");
+					binmode PAGE, ':encoding(UTF-8)';
+					my @pagelines = <PAGE>;
+					seek PAGE, 0, 0;
+					truncate PAGE, 0;
+					foreach $pageline (@pagelines)  {
+						$pageline =~ s/\n//;
+						my $oldns;
+						my $newns;
+						while($pageline =~ m/([^\{\}]*)(\{\{[^\}]*\}\})([^\{\}]*)/g ) {
+							my $link = $2;
+							$link =~ s/[\{\}]*//g;
+							$link =~ s/\?.*//g;
+							$link =~ s/\|.*//g;
+							$link =~ s/:/\//g;
+							my $mediapath = $path;
+							$mediapath =~ s/\/pages\//\/media\//g;
+							if (-e "./media/$link") {
+								print "Found media ./media/$link. Move to $mediapath$filename\n";
+								system ("mkdir -p $mediapath$filename");
+								system ("mv ./media/$link $mediapath$filename");
+							}
+							$oldns = $path;
+							$oldns =~ s/\.\/pages\///g;
+							$oldns =~ s/\//:/g;
+							$oldns =~ s/:$//g;
+							$newns = "$mediapath$filename";
+							$newns =~ s/\.\/media\///g;
+							$newns =~ s/\//:/g;
+							$newns =~ s/:$//g;
+						}
+						$pageline =~ s/$oldns/$newns/g;
+						print PAGE $pageline . "\n";
+					}
+				close (PAGE);
+			} else {
+				print LINKS $line . "\n";
+			}
+
+		}
+	close (LINKS);
+
+}
+
+# Correct wiki internal links
+if ($correct_internal_links) {;
+	
+	open(LINKS, '<', "linkdatabase.dat") or die("Could not open linkdatabase.dat");
+		binmode LINKS, ':encoding(UTF-8)';
+		my @lines = <LINKS>;
+	close (LINKS);
+
+	foreach $line (@lines)  {
+
+		$line =~ s/\n//;
+		my @fields = split (/\|/, $line);
+		if (-e @fields[0]) {
+			open(PAGE, '+<', "@fields[0]") or die("Could not open @fields[0]");
+				binmode PAGE, ':encoding(UTF-8)';
+				my @pagelines = <PAGE>;
+				seek PAGE, 0, 0;
+				truncate PAGE, 0;
+				foreach $pageline (@pagelines)  {
+					$pageline =~ s/@fields[1]/@fields[2]/g;
+					print PAGE $pageline . "\n";
+				}
+				close (PAGE)
+		}
+
+	}
+
+}
 
 print "\n\nAll files done. Good bye.\n\n";
 exit(0);
