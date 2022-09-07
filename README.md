@@ -91,6 +91,17 @@ my $tocname = "Inhalt";
 # Remove Attachement Section created by Confluence Export routine
 my $remove_attachementsec = 1;
 
+# Correct all wiki internal links to new location
+# (if disabled, all internal links will point to the html
+# file from the confluence export)
+my $correct_internal_links = 1;
+
+# Move main pages to (sub-)namespaces with equal name
+# This is useful if you used confluence subpages. You main page
+# will then be moved to the sub-namespace.
+my $move_main_to_sub = 1;
+my $name_mainpage = "start.txt";
+
 ##############################################################
 # END Settings
 ##############################################################
