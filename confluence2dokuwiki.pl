@@ -271,12 +271,13 @@ foreach my $inputfile (@files) {
 	# Create path with namespaces for page and copy page
 	$dw_ns_path = $dw_ns;
 	$dw_ns_path =~ s/:/\//g;
+	$dw_ns_path .= "/" if $dw_ns_path ne "";
 	$outputfilenew = unidecode($outputfilenew);
 	$outputfilenew =~ s/\s+//g;
 	$outputfilenew =~ s/[^A-Za-z0-9]//g;
-	print "Output File: ./pages/$dw_ns_path/$outputfilenew.txt\n\n";
+	print "Output File: ./pages/$dw_ns_path$outputfilenew.txt\n\n";
 	system ("mkdir -p  ./pages/$dw_ns_path");
-	system("cp $outputfile ./pages/$dw_ns_path/$outputfilenew.txt");
+	system("cp $outputfile ./pages/$dw_ns_path$outputfilenew.txt");
 	unlink ($outputfile);
 	unlink ($tmpfile);
 
@@ -290,7 +291,11 @@ foreach my $inputfile (@files) {
 
 	# "Register" file for later on internal link correction
 	open(FILE, '>>', "linkdatabase.dat") or die("Could not open linkdatabase.dat");
-		print FILE "./pages/$dw_ns/$outputfilenew.txt" . "|" . $filename . $suffix . "|" . "$dw_ns" . ":" . "$outputfilenew.txt\n";
+		$dw_ns .= ":" if $dw_ns ne "";
+		$dw_ns =~ s/^://;
+		my $filepath = $dw_ns;
+		$filepath =~ s/:/\//g;
+		print FILE "./pages/$filepath$outputfilenew.txt" . "|" . $filename . $suffix . "|" . "$dw_ns" . "$outputfilenew.txt\n";
 	close (FILE);
 	
 	print "\n\nAll files copied to ./media and ./pages.\n\n";
@@ -302,6 +307,7 @@ foreach my $inputfile (@files) {
 
 # Move main pages to sub-namespaces and rename to e.g. start.txt
 if ($move_main_to_sub) {;
+	print "\n";
 	
 	open(LINKS, '+<', "linkdatabase.dat") or die("Could not open linkdatabase.dat");
 		binmode LINKS, ':encoding(UTF-8)';
@@ -316,7 +322,8 @@ if ($move_main_to_sub) {;
 			my @fields = split (/\|/, $line);
 			my @suffixes = (".txt");   
 			my ($filename,$path,$suffix) = fileparse($fields[0], @suffixes);
-			if (-d "$path$filename") { # ns with equal name to file exists -> subpages
+			if (-d "$path$filename" && !-e "$path$filename/$name_mainpage") { # ns with equal name to file exists -> subpages
+			#if (-d "$path$filename" && !-e "$path$filename/$name_mainpage") { # ns with equal name to file exists -> subpages
 				my $newfile = "$path$filename/$name_mainpage";
 				print "Found sub-namespace: Move $path$filename/$filename$suffix to $newfile\n";
 				my @ns = split (/\//, $newfile);
@@ -374,27 +381,38 @@ if ($move_main_to_sub) {;
 
 # Correct wiki internal links
 if ($correct_internal_links) {;
+	print "\n";
 	
 	open(LINKS, '<', "linkdatabase.dat") or die("Could not open linkdatabase.dat");
 		binmode LINKS, ':encoding(UTF-8)';
-		my @lines = <LINKS>;
+		my @linklines = <LINKS>;
 	close (LINKS);
 
-	foreach $line (@lines)  {
+	foreach $linkline (@linklines)  {
 
-		$line =~ s/\n//;
-		my @fields = split (/\|/, $line);
+		$linkline =~ s/\n//;
+		my @fields = split (/\|/, $linkline);
 		if (-e @fields[0]) {
-			open(PAGE, '+<', "@fields[0]") or die("Could not open @fields[0]");
+			print "Converting internal links in @fields[0]\n";
+			open(PAGE, '<', "@fields[0]") or die("Could not open @fields[0]");
 				binmode PAGE, ':encoding(UTF-8)';
 				my @pagelines = <PAGE>;
-				seek PAGE, 0, 0;
-				truncate PAGE, 0;
-				foreach $pageline (@pagelines)  {
-					$pageline =~ s/@fields[1]/@fields[2]/g;
-					print PAGE $pageline;
+			close (PAGE);
+			foreach $linkline1 (@linklines) {
+				$linkline1_ =~ s/\n//;
+				my @fields1 = split (/\|/, $linkline1);
+					foreach (@pagelines) {
+						$_ =~ s/@fields1[1]/@fields1[2]/g;
+						$_ =~ s/\n//g;
+					}
+			}
+			open(PAGE, '>', "@fields[0]") or die("Could not open @fields[0]");
+				binmode PAGE, ':encoding(UTF-8)';
+				foreach (@pagelines) {
+					print PAGE $_ . "\n";
 				}
-				close (PAGE)
+			close (PAGE);
+
 		}
 
 	}
