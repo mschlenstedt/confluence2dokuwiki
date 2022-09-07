@@ -98,9 +98,9 @@ my $remove_attachementsec = 1;
 
 ### Tips & Tricks
 
-Q: For one special namespace I want to have all pages in sub-namespaces. If there exists subpages, the script creates these sub-namespaces, but all other files stay in the main namespace.
+**Q:** For one special namespace I want to have all pages in sub-namespaces. If there exists subpages, the script creates these sub-namespaces, but all other files stay in the main namespace.
 
-A: Run the converter for the first time. Then go to the namespace folder under your ./pages folder and start the following bash command:
+**A:** Run the converter for the first time. Then go to the namespace folder under your ./pages folder and start the following bash command:
 
 ```
 for file in ./*.txt; do mkdir -p `basename $file .txt`; done
