@@ -392,7 +392,7 @@ if ($correct_internal_links) {;
 				truncate PAGE, 0;
 				foreach $pageline (@pagelines)  {
 					$pageline =~ s/@fields[1]/@fields[2]/g;
-					print PAGE $pageline . "\n";
+					print PAGE $pageline;
 				}
 				close (PAGE)
 		}
