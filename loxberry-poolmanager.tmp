@@ -1,0 +1,207 @@
+  - [[index.html|LoxBerry]]
+  - [[LoxBerry_1189740697.html|LoxBerry]]
+  - [[Plugins_1189740717.html|Plugins]]
+
+
+======  LoxBerry : LoxBerry PoolManager  ======
+
+
+Created by  Michael Schlenstedt, last modified on 21.08 2022
+
+|Autor          |[[https://loxwiki.atlassian.net/wiki/people/6166f604d9820f00702fdbf7?ref=confluence|Michael Schlenstedt]]                         |
+|Logo           |{{attachments/1254687237/1728905230.png}}                                                                                         |
+|Status         |UNSTABLE                                                                                                                          |
+|Version        |0.9.0 BETA                                                                                                                        |
+|Min. LB Version|LB 2.0.1                                                                                                                          |
+|Download       |https://github.com/mschlenstedt/LoxBerry-Plugin-Poolmanager/archive/refs/tags/PoolManager-V0.9.0.zip                              |
+|Zweck          |Mit dem LoxBerry PoolManager kann eine automatische pH-Wert und Chlor-Regelung mit Sensoren von Atlas Scientific aufgebaut werden.|
+|Languages      |DE                                                                                                                                |
+|Diskussion     |                                                                                                                                  |
+
+
+
+{{images/icons/grey_arrow_down.png}}Version History...
+
+https://github.com/mschlenstedt/LoxBerry-Plugin-Weather4Lox/releases
+
+
+
+====== Inhalt ======
+
+  * [[#LoxBerryPoolManager-Download|Download]]
+  * [[#LoxBerryPoolManager-FunktiondesPlugins|Funktion des Plugins]]
+  * [[#LoxBerryPoolManager-Installation|Installation]]
+  * [[#LoxBerryPoolManager-Hardwarevorbereiten|Hardware vorbereiten]]
+  * [[#LoxBerryPoolManager-Konfigurationsoptionen|Konfigurationsoptionen]]
+    * [[#LoxBerryPoolManager-Reiter:Sensoren/Aktoren|Reiter: Sensoren / Aktoren]]
+    * [[#LoxBerryPoolManager-Reiter:Einstellungen|Reiter: Einstellungen]]
+  * [[#LoxBerryPoolManager-EinrichtunginderLoxoneConfigSoftware|Einrichtung in der Loxone Config Software]]
+    * [[#LoxBerryPoolManager-Messwerteauslesen/verwenden|Messwerte auslesen/verwenden]]
+    * [[#LoxBerryPoolManager-AktorenundPluginsteuern|Aktoren und Plugin steuern]]
+      * [[#LoxBerryPoolManager-BefehlanSensor/Aktorsenden|Befehl an Sensor/Aktor senden]]
+      * [[#LoxBerryPoolManager-BefehlandasPluginsenden(Pluginfunktionensteuern)|Befehl an das Plugin senden (Pluginfunktionen steuern)]]
+  * [[#LoxBerryPoolManager-Roadmap|Roadmap]]
+  * [[#LoxBerryPoolManager-FragenstellenundFehlermelden|Fragen stellen und Fehler melden]]
+
+
+\\
+
+
+
+----
+
+===== Download =====
+
+Download über das entsprechende GIT-Archiv. Der aktuellste Download findet sich oben in der Tabelle. Ältere Versionen im Release-Archiv: https://github.com/mschlenstedt/LoxBerry-Plugin-Poolmanager/releases
+
+===== Funktion des Plugins =====
+
+Das Plugin stellt ein Gateway zu den [[https://atlas-scientific.com/|Atlas Scientific]] Sensoren und Aktoren bereit. Dabei werden alle unterstützten Sensoren (z. B. pH-Sonde, Redox-Sonde) kontinuierlich ausgelesen und per MQTT und dem [[MQTT-Gateway_1219757633.html|MQTT Gateway Plugin]] an den Miniserver übertragen. Aktoren (Dosierpumpen) von Atlas Scientific können zudem über das Gateway angesteuert werden und so entsprechende Dosierungen vorgenommen werden.
+
+Alle Sensoren und Aktoren können über das Plugin kalibriert werden. Des weiteren bietet das Plugin die Ausgabe aller Messwerte sowie die Durchführung des Kalibrierungsprozesses über ein LCD Display an, welches vor Ort im Pool-Technikhaus angebracht sein kann (Raspberry muss dazu natürlich im Pool-Technikhaus installiert sein).
+
+Folgende Hardware wird vom Plugin unterstützt: [[1729953793.html|Unterstützte Hardware]]
+
+===== Installation =====
+
+Keine Besonderheiten. Das Plugin wird standardmäßig über die Pluginverwaltung installiert. Das Plugin setzt ein installiertes und konfiguriertes  [[MQTT-Gateway_1219757633.html|MQTT Gateway Plugin]] voraus!
+
+===== Hardware vorbereiten =====
+
+Vor der ersten Verwendung mit dem Plugin müssen alle Sensoren und Aktoren in den I2C-Modus versetzt werden (standardmäßig werden die Sensoren im UART Modus ausgeliefert). Wenn ihr zwei gleiche Sensoren oder Aktoren einsetzen möhctet (z. B. zwei Dosierpumpen), müsst ihr zudem von einem der Geräte die Default-Busadresse ändern. Wie das geht ist hier beschrieben: [[1729953793.html|Unterstützte Hardware]]
+
+===== Konfigurationsoptionen =====
+
+=== Reiter: Sensoren / Aktoren ===
+
+Hier kann das Atlas Scientific Gateway gestartet und gestoppt werden und es können neue Sensoren oder Aktoren zu eurer Konfiguration hinzugefügt werden. Zudem kann der I2C Bus nach Geräten gescannt werden.
+
+Hinzufügen/Editieren von Sensoren und Aktoren:
+
+|Option                            |Beschreibung                                                                                                                                                                                           |
+|Name                              |Eindeutiger Name für den Sensor. Vermeidet Sonderzeichen, Umlaute, Leerzeichen (auch wenn diese theoretisch funktionieren sollten). Der Name wird in den Sensor geschrieben (gefiltert, rein ASCII).   |
+|Typ                               |Typ des Sensors, z. B. pH, ORP (Redox), PRS (Pressure) usw.                                                                                                                                            |
+|Adresse                           |I2C Busadresse in Dezimalschreibweise, z. B. "99" für die pH Sonde.                                                                                                                                    |
+|Nutze Kalibrierung über das Plugin|Ist diese Option aktiviert, kann die Sonde über das WebUI (und ggf. LCD Display) bequem kalibriert werden.                                                                                             |
+|Unterer Kalibrierungspunkt        |Unterer Kalibrierungspunkt oder bei 1-Punkt-Kalibrierung der einzigste Kalibrierungspunkt. Hier wird der Zielwert eingegeben, also bei z. B. der 4.0 pH Kalibrierungslösung wird hier "4.0" eingegeben.|
+|Mittlerer Kalibrierungspunkt      |Mittlerer Kalibrierungpunkt. Leer lassen wenn keine Zwei- oder Dreipunktkalibrierung verwendet wird. Ansonsten analog dem unteren Kalibrierungspunkt Zielwert eingeben.                                |
+|Oberer Kalibrierungspunkt         |Oberer Kalibrierungpunkt. Leer lassen wenn keine Dreipunktkalibrierung verwendet wird. Ansonsten analog dem unteren Kalibrierungspunkt Zielwert eingeben.                                              |
+|Zeige Wert auf LCD                |Ist ein LCD angeschlossen, kann hier die Anzeige auf dem LCD aktiviert werden. Alle aktivierten Sensoren/Aktoren werden auf dem LCD der Reihe nach in einer Endlosschleife angezeigt.                  |
+|Einheit für LCD                   |Diese Einheit wird dem Wert angefügt. Nur reines ASCII ist möglich!                                                                                                                                    |
+|Wert für LCD                      |Einige Sensoren/Aktoren senden mehrere Werte (bei PMP Pumpen z. B. aktueller Dosierwert und die Zählerstände). Hier könnt ihr auswählen, welcher der Werte am LCD angezeigt werden soll.               |
+
+
+**Nach jedem Hinzufügen, Löschen oder Ändern muss das Gateway neu gestartet werden, damit die Änderungen aktiv werden!**
+
+** **
+
+=== Reiter: Einstellungen ===
+
+Grundlegende Einstellungen zum Plugin werden im Tab "Einstellungen" getätigt:
+
+|Option                           |Beschreibung                                                                                                                                                                                                                                                                                                                                            |
+|Aktualisierungszeit Status [s]   |Nach dieser Anzahl an Sekunden wird der Status der Sensoren (damit sind nicht die Messwerte gemeint!) neu eingelesen werden. Das beinhaltet z. B. Informationen über Firmware, Spannung, Konfigurationsoptionen etc. Das Auslesen nimmt einige Zeit in Abspruch, in der das Plugin nichts anderen machen kann. Werte < 3600 Sekunden machen keinen Sinn.|
+|Aktualisierungszeit Messwerte [s]|Nach dieser Anzahl Sekunden werden alle Messwerte erneut vom Plugin eingelesen. Kürzere Zeiten als 1,5s sind nicht realisierbar. Sinnvoll sind Werte ab 5 Sekunden, da sowohl pH- als auch Redoxmessungen träge sind.                                                                                                                                   |
+|MQTT Topic                       |Unter diesem Topic werden die Daten des Plugins im Broker veröffentlicht                                                                                                                                                                                                                                                                                |
+
+
+\\
+
+
+===== Einrichtung in der Loxone Config Software =====
+
+==== Messwerte auslesen/verwenden ====
+
+Das Plugin sendet alle ausgelesenen Messwerte per MQTT an den MQTT Broker bzw. das  [[MQTT-Gateway_1219757633.html|MQTT Gateway Plugin]]. Im Gateway Plugin muss das Topic des PoolManager Plugins abonniert werden (standardmäßig lautet das Topic "poolmanager/#"). Bitte lest in der Dokumentation des  [[MQTT-Gateway_1219757633.html|MQTT Gateway Plugin]] nach, wie genau die Werte in der Loxone Config verwendet werden: [[1219757663.html|MQTT - Schritt für Schritt: MQTT -> Loxone]]
+
+Ich behandele das Thema "Anlegen eines Virtuellen Eingangs" hier nur in Kürze:
+
+  * Virtuellen Eingang anlegen
+  * Bezeichnung aus der Incoming Overview des Gateway Plugins kopieren und im Virtuellen Eingang exakt so einfügen. 
+  * Als Digitaleingang verwenden: NEIN
+  *  Validierung korrekt setzen.
+
+Beispiel anhand der pH Sonde (Adresse 99):
+
+{{attachments/1254687237/1729757363.png?height=400?0x400}}
+
+\\
+
+
+==== Aktoren und Plugin steuern ====
+
+Alle Aktoren (Pumpen) und auch das Plugin können über das Topic**''%% poolmanager/set/command%%''** gesteuert werden. Dazu muss für das [[MQTT-Gateway_1219757633.html|MQTT Gateway Plugin]] ein Virtueller Ausgang angelegt werden. Bitte lest in der Dokumentation des  [[MQTT-Gateway_1219757633.html|MQTT Gateway Plugin]] nach, wie genau die Werte in der Loxone Config verwendet werden: [[1219757665.html|MQTT - Schritt für Schritt: Loxone -> MQTT]]
+
+Ich behandele das Thema "Anlegen eines Virtuellen Ausgangs" hier nur in Kürze:
+
+  * Virtuellen Ausgang anlegen, Adresse: /dev/udp/192.168.3.212/11884 (IP und ggf. Port müsst ihr anpassen)
+  * Darunter einen "Virtuellen Ausgang Befehl" anlegen
+  * Befehl bei EIN: **''%%publish poolmanager/set/command <EUER BEFEHL>%%''**
+  * //**Optional: **//Befehl bei AUS: **''%%publish poolmanager/set/command <EUER BEFEHL>%%''**
+  * Als Digitalausgang verwenden: je nach Bedarf, meist hier NEIN (um Werte über <v> an das Plugin zu übertragen
+
+Für die Befehle gibt es nun zwei Möglichkeiten: Entweder einen Befehl direkt an einen Sensor oder Aktor senden oder aber einen Befehl an das Plugin senden:
+
+=== Befehl an Sensor/Aktor senden ===
+
+Hierbei fügt ihr direkt den Befehl, den ihr aus der Dokumentation des Atlas Scientific Sensors entnehmen könnt, direkt 1:1 hier ein. Dem Befehl wird die Sensor-Adresse gefolgt von einem Doppelpunkt vorangestellt. Beispiel: Dosierbefehl an die Pumpe mit der Adresse 103 senden. Der Befehl lautet dann: **''%%103:d,<v>%%''** Das <v> wird von Loxone dann wie üblich durch den Analogwert des Befehlseingangs ersetzt. An das Plugin und damit die Pumpe wird also z. B. gesendet: 103:d,50 um 50ml über die Pumpe zu dosieren.
+
+Beispiel Dosierbefehl an Pumpe:
+
+{{attachments/1254687237/1729757389.png?height=250?0x250}}
+
+{{attachments/1254687237/1729724879.png?height=400?0x400}}
+
+\\
+
+
+=== Befehl an das Plugin senden (Pluginfunktionen steuern) ===
+
+Das Plugin kann über das gleiche Topic wie die Sensoren und Aktoren gesteuert werden. Anstelle der vorangestellten Sensoradresse wird hier aber das Signalwort "plugin" gefolgt von einem Doppeltpunkt gestellt. Beispiel Auslesen der Sensoren pausieren: **''%%plugin:pause%%''**
+
+Folgende Befehle werden aktuell vom Plugin unterstützt:
+
+  * **''%%plugin:pause%%''** - Pausiert das Plugin bzw. das Auslesen der Sensoren und versetzt alle Sensoren und Aktoren in den SLEEP Modus (z. B. wenn die Poolpumpe nicht läuft)
+  * **''%%plugin:start%%''** - Startet das Plugin wieder (z. B. wenn die Poolpumpe morgens wieder läuft)
+  * **''%%plugin:getstatus%%''** - liest alle Statuswerte neu ein
+  * **''%%plugin:getvalues%%''** - Liest alle Messwerte neu ein
+  * **''%%plugin:readconfig%%''** - Liest die Pluginkonfiguration neu ein (z. B. bei Änderungen) und aktualisiert anschließend den Status aller Sensoren
+
+ 
+
+Beispiel Plugin bei EIN starten und bei AUS pausieren lassen:
+
+{{attachments/1254687237/1729790160.png?height=400?0x400}}
+
+ 
+
+===== Roadmap =====
+
+===== Fragen stellen und Fehler melden =====
+
+\\
+
+
+\\
+
+
+
+===== Attachments: =====
+
+
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1254687237/1728905230.png|icon_64.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1254687237/1729757363.png|image2022-8-21_8-47-4.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1254687237/1729757389.png|image2022-8-21_11-4-9.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1254687237/1729724879.png|image2022-8-21_11-4-50.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1254687237/1729790160.png|image2022-8-21_11-13-27.png]] (image/png)\\
+
+
+
+
+
+Document generated by Confluence on 31. Aug., 2022 20:09
+
+[[http://www.atlassian.com/|Atlassian]]
+
+
+

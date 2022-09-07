@@ -105,7 +105,7 @@ foreach my $inputfile (@files) {
 	my $tmpfile = $dw_pagename . ".tmp";
 	print "Tmp. Output File: $tmpfile\n";
 
-	print "\n\n########### Start pandoc to convert HTML to DokuWiki ###########\n\n";
+	print "\n########### Start pandoc to convert HTML to DokuWiki ###########\n\n";
 
 	system ("$pandocbin --verbose --from=html --to=dokuwiki --output=$tmpfile $inputfile");
 
@@ -113,7 +113,7 @@ foreach my $inputfile (@files) {
 		die "Something went wrong while using pandoc to convert from HTML to DokuWiki format.";
 	}
 
-	print "\n\n########### End pandoc ###########\n\n\n";
+	print "\n########### End pandoc ###########\n\n\n";
 
 	open(IN, $tmpfile) or die("Could not open $tmpfile");
 	binmode IN, ':encoding(UTF-8)';

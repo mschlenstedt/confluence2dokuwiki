@@ -1,0 +1,537 @@
+  - [[index.html|LoxBerry]]
+  - [[LoxBerry_1189740697.html|LoxBerry]]
+  - [[Plugins_1189740717.html|Plugins]]
+
+
+======  LoxBerry : Sonos4Loxone  ======
+
+
+Created by  Michael Schlenstedt, last modified by  Oliver Lewald on 01.08 2022
+
+\\
+
+
+|Autor          |[[https://loxwiki.atlassian.net/wiki/people/6166f961198b4f0068f143b3?ref=confluence|Oliver Lewald]]                                        |
+|Logo           |{{attachments/1193708001/1193707980.png}}                                                                                                  |
+|Status         |RELEASE                                                                                                                                    |
+|Version        |v5.2.2                                                                                                                                     |
+|Min. LB Version|LB 1.4.0LB 2.X                                                                                                                             |
+|Download       |Release https://github.com/Liver64/LoxBerry-Sonos/archive/refs/tags/v5.2.2.zip\\ \\ Pre-Release                                            |
+|Zweck          |Das Sonos4Lox Plugin stellt basierend auf dem LoxBerry eine Komplettlösung zur Steuerung einer Sonos Multi Room Installation zur Verfügung.|
+|Languages      |EN, DE                                                                                                                                     |
+|Diskussion     |https://www.loxforum.com/forum/projektforen/loxberry/plugins/74862-loxberry-sonos-plugin-v1-0-0-verf%C3%BCgbar                             |
+
+
+
+\\
+
+
+====== Inhalt ======
+
+  * [[#Sonos4Loxone-AufgabedesPlugins|Aufgabe des Plugins]]
+  * [[#Sonos4Loxone-Allgemeines|Allgemeines]]
+  * [[#Sonos4Loxone-KonfigurationsoptionenLoxberry|Konfigurationsoptionen Loxberry]]
+    * [[#Sonos4Loxone-SonosZonenhinzufügen|Sonos Zonen hinzufügen]]
+    * [[#Sonos4Loxone-Text-to-speech(T2S)|Text-to-speech (T2S)]]
+    * [[#Sonos4Loxone-Feineinstellungen|Feineinstellungen]]
+    * [[#Sonos4Loxone-RadioFavoritenfürTasterbedienung|Radio Favoriten für Tasterbedienung]]
+  * [[#Sonos4Loxone-Download|Download]]
+  * [[#Sonos4Loxone-Fehlerberichte|Fehlerberichte]]
+  * [[#Sonos4Loxone-Tipps&Tricks|Tipps & Tricks]]
+  * [[#Sonos4Loxone-ZusatzSoftware|Zusatz Software]]
+  * [[#Sonos4Loxone-BekannteProbleme|Bekannte Probleme]]
+  * [[#Sonos4Loxone-Roadmap|Roadmap]]
+  * [[#Sonos4Loxone-FAQ/Troubleshooting|FAQ / Troubleshooting]]
+  * [[#Sonos4Loxone-VerwandteArtikel|Verwandte Artikel]]
+
+
+\\
+
+
+
+----
+
+===== Aufgabe des Plugins =====
+
+Das Plugin dient zur Steuerung einer Sonos Multi Room Installation aus Loxone heraus. Es stehen die gängigen Standardbefehle, aber auch Text-to-speech (T2S), Sonos-to-speech, Clock-to-speech und bei installiertem Wunderground Plugin auch weather-to-speech zur Verfügung. Darüberhinaus können auch Werte (z.B. Temperatur oder Fensterstatus) von Loxone in die text-to-speech Ansagen integriert werden. 
+
+Zusätzlich werden Informationen wie Titel/Interpret, Play/Stop/Pause und Lautstärke je Zone per UDP Pakete und über virtuelle Texteingangsverbinder zur Verfügung gestellt.
+
+Ein ganz besonderer Dank gilt [[https://loxwiki.atlassian.net/wiki/people/6166f604d9820f00702fdbf7?ref=confluence|Michael Schlenstedt]] und [[https://loxwiki.atlassian.net/wiki/people/6166f83364ff010071d5b312?ref=confluence|Sven Thierfelder]] ohne deren Hilfe das Plugin nicht hätte realisiert werden können {{images/icons/emoticons/smile.png?16x16|(Lächeln)}}
+
+\\
+
+
+===== Allgemeines =====
+
+Das Sonos System ist grundsätzlich sehr ausgeklügelt und durchdacht aufgebaut, auch von seiner Topology und der Flexibilität. Leider fehlt es an einer offiziellen API, so dass das hier veröffentlichte Plugin auf der alten PHPSonos.inc.php basiert die nach und nach mit Hilfe von Wireshark gewachsen ist.
+
+Grundsätzlich funktioniert Sonos und das Plugin nahezu wartungsfrei, es gibt aber ein/zwei Besonderheiten die es bei der Nutzung zu beachten gibt.
+
+Die Sonos Player sind nicht gerade als Stromsparwunder bekannt, von daher gibt es User die ihre Player (Zonen) über schaltbare Steckdosen ausschalten und nur bei Bedarf wieder einschalten. Das kann, gerade bei einer Programmierung in einer Hausautomation, zu Problemen z.B. bei T2S führen, so dass im schlimmsten Fall die T2S nicht abgespielt werden kann, da eine Zone nicht erreichbar ist. Von daher empfehle ich alle Zonen immer am Netz zu lassen, da diese auch bis zu 2 Minuten benötigen um im SonosNet als Zone zur Verfügung zu stehen. Es ist zwar auch eine Abfrage bzgl. Online Verfügbarkeit eingebaut, diese aber nicht in der stabilen Qualität läuft wie ich es mir eigentlich wünsche.
+
+Des weiteren gibt es noch LAN-Installationen die eine Sonos Bridge verwenden, diese produzierte in der Vergangenheit immer mal wieder Probleme durch eine Mischinstallation mit WLAN. Von daher empfehle ich jedem seine Sonos Installation per Wireless zu betreiben, wobei ja mind. 1 Zone per LAN verbunden sein sollte, aber halt ohne Bridge. Außerdem bereitet die Bridge im Verbund mit dem Plugin zunehmend Probleme, gerade bei der folgenden Grundkonfiguration.
+
+__**WICHTIG:**__ Um einen möglichst reibungslosen Betrieb des Plugins zu gewährleisten sollten alle Sonos Player über statische IP-Adressierung verfügen, da das Plugin IP basierend die einzelnen Befehle ausführt.
+
+Zusammenfassung:
+
+  * **Alle Sonos Player am Netz lassen**
+  * **Sonos Bridge aus dem Netzwerk entfernen**
+  * **Sonos Player mit statischer IP Adressierung**
+
+[[https://loxwiki.atlassian.net/wiki/pages/resumedraft.action?draftId=1193708001|Go to Top]] 
+
+===== Konfigurationsoptionen Loxberry =====
+
+Als erstes muss eine Grundkonfiguration durchgeführt werden. Das heißt im Detail die vorhanden Sonos Player hinzufügen und diverse Parameter ergänzen.
+
+==== Sonos Zonen hinzufügen ====
+
+{{attachments/1193708001/1691123716.png?width=1100?1100}}
+
+Durch Betätigen des Buttons "Scan Zonen" durchsucht das Plugin dein Netzwerk nach vorhanden Sonos Playern. Dabei werden Bridge, Dock, Boost und Subwoofer nicht berücksichtigt.
+
+__**Hinweis:**__ Bitte vorher unbedingt sicherstellen das alle Player ONLINE sind!
+
+Nach erfolgtem Scan sollte folgender Bildschirm erscheinen:
+
+{{attachments/1193708001/1702068225.png?width=1100?1100}}
+
+{{attachments/1193708001/1701969922.png?width=1100?1100}}
+
+{{attachments/1193708001/1690927133.png?width=1100?1100}}
+
+\\
+
+
+Falls nach dem Scan keine Player erscheinen überprüfe dein Netzwerk (Fritzbox, Switch, Firewall, Virenscanner etc.) ob Mulitcast enabled ist. Eigentlich sollte das im Standard der Fall sein, aber gerade Virenscanner und managed Switches haben Multicast zum Teil disabled.
+
+Das Skript sucht basierend auf dem SSDP Protokoll nach UPnP Devices mit folgender Multicast Adresse: 239.255.255.250 Port:1900. Dieser Port muss nicht explizit im Router konfiguriert werden!
+
+\\
+
+
+Die Angaben für Raum und Modell sind NICHT änderbar und sind analog zur Sonos App. Falls eine Zone in der Sonos App umbenannt wird, muss anschließend in der Konfiguration der alte Eintrag gelöscht werden (Tick-box vor der jeweiligen Zone) und speichern, dann erneut einen Scan ausführen um die umbenannte Zone zu finden. Das gleiche gilt auch für neu hinzugefügte Player.
+
+Wenn du einen Player aus irgendeinem Grund löschen möchtest, markiere die Tick-Box des entsprechenden Players und speichere die Konfiguration. Solange du nicht wieder den Scan Button betätigst ist die Zone für den MS nicht mehr erreichbar.
+
+Als nächsten Schritt müssen folgende 3 Werte je Zone/Player ergänzt werden:
+
+  * **T2S:** Player der für T2S Anouncements verwendet werden soll
+  * **T2S Volume:** Der eingegebene Wert (zwischen 0-100) ist die Standard Lautstärke für T2S Durchsagen für diese Zone.
+  * **Sonos Volume:** Der eingegebene Wert (zwischen 0-100) ist die Standard Sonos Lautstärke für diese Zone.
+  * **Sonos maximal Volume:** Der eingegebene Wert (zwischen 0-100) ist die maximale Sonos Lautstärke für diese Zone.
+
+Standard bedeutet dass ohne Angabe von Volume innerhalb der Syntax diese Lautstärkewerte genommen werden. Näheres über die Verwendung von Volume in der Syntax findest du im Kapitel "Syntax".
+
+Erst nach erfolgreicher Ergänzung dieser Werte lässt sich das Plugin speichern.
+
+[[https://loxwiki.atlassian.net/wiki/pages/resumedraft.action?draftId=1193708001|Go to Top]]
+
+==== Text-to-speech (T2S) ====
+
+Um die speech Funktionen nutzen zu können benötigt man eine Speech Engine, diese kann entweder Online oder Offline sein. Folgende T2S Optionen stehen zur Auswahl:
+
+  * **VoiceRSS** → Online Engine, benötigt nur einen API key (nur eine weibliche Stimme)
+  * **[[https://aws.amazon.com/de/polly/|Amazon Polly]]** → Online Engine, benötigt einen API und einen secret key. (eine weibliche und eine männliche Stimme) **__ACHTUNG: Preismodell beachten.__**
+  * **Mac OSX** → Offline Engine, benötigt einen OSX Server
+  * **Pico2Wave** → Offline Engine, bei installiertem Text2SIP Plugin (nur eine weibliche Stimme)
+  * **Google** → begrenzt auf max. 100 Zeichen, dafür multilingual
+  * **ResponsiveVoice** → Online Engine, benötige keine keys (nur eine weibliche Stimme)
+  * **GoogleCloud** → Online Engine, benötigt einen API key (multilingual und Auswahl an Stimmen/Qualität/Gender **__ACHTUNG: Preismodell beachten __**
+  * **MS Azure** → Online Engine, benötigt einen API key (multilingual und Auswahl an Stimmen **__ACHTUNG: Preismodell beachten  __**→ **Empfehlung**
+
+Nach erfolgreichem Generieren der entprechenden Key(s) müssen diese in den entsprechenden Feldern eingetragen werden. Wenn jemand die Offline T2S Version für OS X verwenden möchte kann ich ihm gerne einen Ansprechpartner nennen, da ich selber keinen OS X Server besitze. Meine Empfehlung ist Polly da a: 3 Stimmen zur Auswahl stehen und auch die Sprachqualität eine Tick besser ist (obsolete), alternativ ResponsiveVoice.
+
+**API key:** Bitte den gültigen API key von VoiceRSS/Google Cloud/MS Azure oder AWS Polly eingeben
+
+**Secret key**: Bitte den gültigen secret key von Polly eingeben
+
+**Auswahl der Standardstimme (Azure/Google Cloud/Polly):** wähle Stimme
+
+
+Die Stimme kann innerhalb der Syntax für T2S jederzeit geändert werden.
+
+
+
+**Verweildauer der MP3 Dateien:** Anzahl der Tage oder Cache Größe die eine MP3 gespeichert werden soll bevor Sie automatisch gelöscht wird.
+
+**Dateiname für Jingle MP3:** Name der Datei die vor einer Durchsage abgespielt werden soll. Diese Datei muss in das Unterverzeichnis **/tts/mp3** kopiert werden. Als Beispiel ist die Datei "2_Airport_gong.mp3" bereits enthalten. Näheres zur Nutzung der Funktion unter [[T2S-Durchsagen_1228539438.html|T2S Durchsagen]]
+
+**Sonos Daten senden:** Schalter um verschiedenste Infos an Loxone per UDP/MQTT, und Titel/Interpret Informationen über virtuelle Texteingang Verbinder zu senden. Näheres zur Nutzung der Funktion unter [[Loxone-Anbindung_1228539699.html|Loxone Anbindung]]
+
+**Kommunikation** zum Miniserver entweder per UDP oder MQTT
+
+**UDP-Port:** Port des MS an den die UDP Pakete geschickt werden sollen. 
+
+[[https://loxwiki.atlassian.net/wiki/pages/resumedraft.action?draftId=1193708001|Go to Top]]
+
+==== Feineinstellungen ====
+
+Bei den Feinstellungen können noch einige nice-to Optionen nachjustiert werden.
+
+{{attachments/1193708001/1711734817.png?width=1100?1100}}
+
+{{attachments/1193708001/1690599703.png?width=1100?1100}}
+
+**Onlineprüfung:** Zeitschema hinsichtlich Prüfung der Onlineverfügbarkeit der Player
+
+**Lautstärke Änderung per Klick:** Hier handelt es sich um eine typische Tasterfunktion um die Lautstärke einer Zone zu ändern. Der hier angegebene Wert erhöht/verringert in den jeweilig angegebenen Sprüngen die Lautstärke.
+
+**Ansage der Radio Station**: Bei der Funktion **say&sonos** kann zwingend die Ansage des aktuell laufenden Senders vorgegeben werden
+
+**Lautstärkeanhebung:** Bei den Funktionen **nextradio** und **zapzone** gibt es optional die Möglichkeit den Titel/Interpret/Radio Sender vorm abspielen ansagen zu lassen (nur bei Single Playern, nicht für Gruppen). Dabei kann es sein das die Ansagelautstärke u.U. zu leise ist. Durch Anpassen des Schiebereglers kann diese etwas lauter eingestellt werden.
+
+**Rampto Parameter:** Rampto ist eine Funktion zum langsamen, kontinuierlichem Erhöhen der Lautstärke. Es stehen 3 verschiedene Parameter zur Verfügung die alle leider nicht in der Laufzeit konfigurierbar sind:
+
+  - //Sleep// → erhöht UND verringert die Lautstärke langsam innerhalb von ca. 17 Sekunden auf die gewünschte Lautstärke (typische Weckeinstellung)
+  - //Alarm// → erhöht zügig und kontinuierlich die Lautstärke auf den gewünschten Wert.
+  - //Auto//→ erhöht relativ schnell die Lautstärke auf den gewünschten Wert.
+
+Bsp: Die Zone steht auf Pause und die Funktion Play wird betätigt. Ist die gegenwärtige Lautstärke < 25 greift der Rampto Parameter und erhöht gemäß der Konfiguration die Lautstärke, ist der Wert darüber geht es mit diesem Lautstärkewert unvermittelt los.
+
+**Rampto Volume:** Schwellwert der angegebenen oder gerade laufenden Lautstärke unterhalb dessen einer der 3 zur Verfügung stehenden Parameter automatisch greifen soll.
+
+**Lautstärke bei Anruf:** Wert auf den die Lautstärke bei Anruf (Fritz.box) zügig reduziert werden soll
+
+**Unterdrückung T2S während Telefonates:** Bei Ein wird eine evtl. anfallende T2S während eines Anrufes blockiert
+
+**Wartezeit bis T2S erneut ausgegeben wird:** Zeit innerhalb der eine T2S nicht ein 2. Mal ausgegeben werden soll (Notwendig für T2S aus dem Statusbaustein)
+
+\\
+
+
+[[https://loxwiki.atlassian.net/wiki/pages/resumedraft.action?draftId=1193708001|Go to Top]]
+
+==== Radio Favoriten für Tasterbedienung ====
+
+Hierbei handelt es sich auch um eine typische Tasterfunktion mit Hilfe derer man durch einen jeweiligen Tastenklick sich durch seine Radiofavoriten durchzappen kann. Ist das Script am Ende der Liste angekommen beginnt es wieder von vorne. Die URL Daten für deine Favoriten werden folgendermaßen ermittelt:
+
+Suche dir deine(n) Sender im Internet (z.B.: google.com und dann Schlagworte "SWR3 URL stream"). Kopiere dann die gewünschte Stream URL ins Feld "**Sender URL**" und gebe bei "**Sender Name**" den Sendernamen ein. Achte bitte darauf das nur Streams die mit **http:%%//%%** beginnen genutzt werden können und folgende Zeichen nicht Bestandteil der URL sein dürfen ? { } | & ~ ! [ ] ( ) ^ " =
+
+__Beispiel:__ Für SWR3 wäre die URL für 128 kBit/s Qualität dann http://mp3-live.swr3.de/swr3_m.m3u
+
+{{attachments/1193708001/1198621767.png?height=150?0x150}}
+
+Weitere Sender findet man hier: https://streamurl.link/\\
+
+
+Der entscheidende Vorteil liegt in der Sonos unabhängigen URL Struktur und des daraus resultierenden Performance Zuwachs beim Wechseln der Sender.
+
+Diese Schritte musste du für jeden deiner Favoriten Sender erneut durchführen.
+
+\\
+
+
+Gimmick am Rande
+
+
+Als Sender Name kannst du auch irgendwas anderes eingeben (z.B. "Namen deiner Frau> Lieblingssender" um deine Frau zu überraschen. Der Name erscheint dann auch automatisch in der Sonos App.
+
+
+
+\\
+
+
+Wenn alle Parameter ergänzt wurden speichere bitte die Konfiguration und teste die erfolgreiche Installation als erstes im Browser bevor es an die Loxone Integration geht.
+
+Dafür kopierst du aus dem Bereich Syntax einen Befehl, ergänzt die Zone und solltest dann eigentlich etwas hören. Nur nicht bitte Play wenn in der entsprechenden Zone weder Radio noch eine Playliste geladen ist ;-(
+
+[[https://loxwiki.atlassian.net/wiki/pages/resumedraft.action?draftId=1193708001|Go to Top]]
+
+===== Download =====
+
+  * Altes Wiki als PDF:
+
+ [[attachments/1193708001/1228539788.pdf|{{attachments/thumbnails/1193708001/1228539788?0x250}}]]\\
+\\
+
+
+===== Fehlerberichte =====
+
+
+Fehlerberichte bitte direkt im [[https://github.com/Liver64/Loxberry-Sonos/issues|F]][[https://www.loxforum.com/forum/projektforen/loxberry/plugins/74862-loxberry-sonos-plugin-v1-0-0-verf%C3%BCgbar|orum]] oder [[https://github.com/Liver64/LoxBerry-Sonos/issues|Github]] posten.
+
+
+
+[[https://loxwiki.atlassian.net/wiki/pages/resumedraft.action?draftId=1193708001|Go to Top]]
+
+\\
+
+
+===== Tipps & Tricks =====
+
+Die Erfahrung zeigt dass es Sinn macht die zu verwendende Syntax immer erst einmal im Browser zu testen bevor sie in Loxone als Ausgangsbefehl angelegt wird.
+
+Es ist auch möglich z.B. für immer wiederkehrende Ansagen (Waschmaschine fertig usw.) vor erstellte MP3 Dateien zu nutzen ohne ständig die T2S Engines zu nutzen. Diese MP3 Dateien müssen a: numerisch sein (4.mp3) und b: mit Hilfe von z.B. WinSCP im Verzeichnis //loxberry/data/plugins/sonos4lox/tts/mp3/// gespeichert werden. 
+
+
+Um numerische MP3 Dateien zu erstellen mache bitte folgendes:
+
+  - Generiere eine Textansage:\\
+__///plugins/sonos4lox/index.php?zone=DEINE_ZONE&playgong=yes&action=sendmessage&text=Waschmaschine ist fertig&volume=20//__
+  - Wechsel in das Verzeichnis  loxberry/data/plugins/sonos4lox/tts/ und benenne die oberste Datei die ungefähr so aussehen müsste 7e7fbecd034c7c8eb7d6fdd2f2790949.mp3 in 1.mp3 um
+  - kopiere mit Hilfe von z.B. WinSCP diese Datei in das Verzeichnis loxberry/data/plugins/sonos4lox/tts/mp3/
+  - Rufe Sie anschließend über folgende Syntax immer wieder auf:\\
+__///plugins/sonos4lox/index.php?zone=DEINE_ZONE&playgong=yes&action=sendmessage&messageid=1//__\\
+//\\
+//Ich persönlich mache mir dann immer noch eine Kopie der numerischen MP3 Datei und hänge mir noch einen Text dran damit ich weiß um welchen Ansagetext es sich handelt (1_Waschmaschine.mp3)
+
+
+
+[[https://loxwiki.atlassian.net/wiki/pages/resumedraft.action?draftId=1193708001|Go to Top]]
+
+===== Zusatz Software =====
+
+**Apps für iOS**
+
+  * Sprachnachrichten direkt vom iPhone an Sonos:\\
+https://itunes.apple.com/us/app/sonos-voice/id689673100?mt=8
+  * Alternative Sonos App welche aus der Visu heraus aufgerufen werden kann und direkt zum jeweiligen Raum springt:\\
+https://itunes.apple.com/de/app/sonophone/id815251931?mt=8
+  * Widget für die Steuerung im Sperrbildschirm:\\
+https://itunes.apple.com/de/app/sonocontrols-widget-for-sonos/id1082647737?mt=8
+
+[[https://loxwiki.atlassian.net/wiki/pages/resumedraft.action?draftId=1193708001|Go to Top]]
+
+=====  Bekannte Probleme =====
+
+
+  * T2S bei Playlisten mit mehr als 1.000 Titeln **→ erledigt**
+  * T2S an Stereopaar (2 Player zusammen) **→ erledigt**
+  * Bei T2S und bestimmten Gruppenkonstallation werden nicht alle Zonen wieder in den Ursprungszustand zurückgesetzt **→ erledigt**
+  * Parameter rampto auch für Radiosender nutzen **→ erledigt**
+  * keine Anzeige der Titel/Interpret Info wenn die Zone Member einer Gruppe ist. **→ erledigt**
+  * Bei der Übergabe des Radiosenders an Loxone wird der Name das Senders teilweise übergangen bzw. nicht korrekt angezeigt. **→ erledigt**
+  * bei nextradio beginnt Skript nicht wieder am Anfang der Radio Favoriten (**Korrektur:** Hängt am Sender der nicht korrekt übermittelt wird) . **→ erledigt**
+  * T2S bei Playlisten im Shuffle Modus (erneute Wiedergabe der Playliste an gleicher Position nur mit anderem Titel)  **→ erledigt**
+  * bei Nutzung der Spotify App zur Musikwiedergabe wird Sonos Playliste nach T2S aufgerufen. → **verworfen (würde eine weitere komplette Entwicklung sein)**
+  * gegenwärtige Lautstärke soll beibehalten werden anstatt entweder Standard Lautstärke bzw. Volume Angabe aus der Syntax **→ erledigt**
+
+===== Roadmap =====
+
+  * Einbinden des Line-in Einganges bei den Playern → **erledigt**
+  * Multilinguale Sprachunterstützung (bis zu 51 Sprachen) für T2S (kein sonos-/clock-/weather-to-speech) **→ erledigt**
+  * Bei den Radio Favoriten kann derzeit kein Sender eingegeben werden der ein einfaches oder auch doppeltes Hochkomma enthält **→ erledigt**
+  * Handling von Stereo Paaren (PLAY:1, PLAY:3 und PLAY:5) **→ erledigt**
+  * T2S Pico2Wave Offline Engine einbinden **→ erledigt**
+  * Einbinden von Fritz-Lox Plugin zur Stummschaltung wenn Telefonanruf→ offen
+  * Zusätzlicher Parameter Radio oder Playliste in UDP Daten bereitstellen **→ erledigt**\\
+
+  * T2S AWS Polly Engine einbinden **→ erledigt**
+  * Microsoft T2S bzw. Translator und Speech Engine einbinden → **verworfen da Qualität schlecht und hoher Aufwand**
+  * Möglichkeit das T2S als batch gespeichert werden und zu einem späterem Zeitpunkt sämtliche gespeicherte Ansage erfolgen  **→ erledigt**
+  * Bei nextradio soll der Radio Sender anstatt des Titel / Interpreten angesagt werden **→ erledigt**
+  * Nutzung der Sonos Favoriten als Playliste (ohne Radio)  **→ erledigt**
+  * callback Funktionen (selbstständige Rückmeldungen von Sonos)
+  * Warten auf die offizielle Sonos API in Q2/2017 {{images/icons/emoticons/smile.png?16x16|(Lächeln)}}
+  * Umschalten von PL/Radio auf Line-In (User Wunsch)  **→ erledigt**
+  * Nutzen von userspezifischen Spotify Playlisten (User Wunsch)  **→ erledigt**
+  * Funktion um zufällig gewählte Playlisten/Radiosender abzuspielen Bsp. Bewegungsmelder (User Wunsch)  **→ erledigt**
+
+===== FAQ / Troubleshooting =====
+
+  * **Warum bekomme ich beim Scan Zonen keine Player angezeigt?**
+  * Ist evtl. in der Sonos App der UPnP Dienst deaktiviert. Bitte Sonos Einstellungen überprüfen
+  * Ich verwende eine Sonos Bridge in meinem Netzwerk. Am besten entfernen und erneut scannen.
+  * **Was mache ich wenn ich eine Zone nicht mehr benötige?**
+  * Vor der nicht mehr benötigten Zone den Papierkorb anticken und speichern
+  * **Was mache ich wenn ich eine Zone in der Sonos App umbennene? **
+  * Vor der umbenannten Zone den Papierkorb anticken und speichern. Anschließend den Scan neu ausführen, Daten ergänzen und speichern. Ggf. den Raum in den Ausgangsverbindern im MS anpassen.
+  * **Was mache ich wenn ich eine neue Zone hinzufügen möchte?**
+  * Den Scan erneut aufrufen, Daten ergänzen und speichern
+  * **Warum bekomme ich bei T2S eine Fehlermeldung bezüglich curl_init?**
+  * Du hast das LoxBerry Image auf einer VM installiert. Aus derzeit unerfindlichen Gründen werden 3 Pakete bei der Grundinstallation vom LoxBerry nicht installiert. Bitte installiere mit dem root User manuell folgende Pakete: apt-get install curl libcurl3 php5-curl
+  * **Warum bekomme ich einen Fehler bei einer Gruppendurchsage?**
+  * Eine Zone darf innerhalb der Syntax nur einmal verwendet werden und nicht über member= noch einmal hinzugefügt werden.
+  * Bsp. falsch:** **http:%%//%%<DEINE IP>/plugins/sonos4lox/index.php?zone=kueche&action=sendgroupmessage&member=kueche,buero&text=dies ist ein test&groupvolume=15
+  * Bsp. richtig:** **http:%%//%%<DEINE IP>/plugins/sonos4lox/index.php?zone=kueche&action=sendgroupmessage&member=buero&text=dies ist ein test&groupvolume=15
+  * **Warum bekomme ich keine Daten per UDP in den Miniserver?**
+  * Der Datentransfer in der Konfiguration ist ausgeschaltet.
+  * Das Portforwarding am Router nicht durchgeführt. (siehe "Miniserveranbindung" → "Portforwarding") 
+  * Senderadresse im virtuellen UDP-Eingang leer lassen
+  * **Warum höre ich keinen playgong/jingle vor meiner T2S?**
+  * Das Jingle MP3 File muss in folgendes Verzeichnis kopiert werden:** /loxberry/data/plugins/sonos4lox/tts/mp3**
+  * **Warum wird keine messageid abgespielt?**
+  * Die numerischen MP3 Files müssen in folgendes Verzeichnis kopiert werden:** /loxberry/data/plugins/sonos4lox/tts/mp3**
+  * **Warum wird keine MP3 (T2S oder messageid) abgespielt?**
+  * Du hast in deinem Router die IPv6 Unterstützung markiert.
+  * ****Warum bekomme ich nur 1x eine T2S und danach muss ich die Zone vom Netz nehmen? Z. B. Fehler "/PHPSonos.php on line 2478" **(wird sich mit Release 2.0 erledigen)  **→ erledigt****
+  * Derzeit ist mir die Ursache nicht bekannt, ich kann es auch nicht reproduzieren. Ein Workaround ist die aktuelle Playliste aus der Queue löschen, die Zone ca. 2 Minuten vom Strom zu nehmen und dann sollte es funktionieren.
+  * Bei Nutzung von Radio oder leerer Queue sollte es einwandfrei funktionieren. Es kann auch sein das evtl. mind. 1 Titel der Playliste (z.B. Streaming Liste) nicht mehr erreichbar ist und von daher gibt es den Fehler beim Speichern der Playliste.
+  * ****Warum wird eine T2S zweimal abgespielt obwohl im virtuellen Ausgangsbefehl nur ein Eintrag bei "Befehl bei EIN" vorhanden ist?****
+  * Im virtuellen Ausgangsbefehl ist der Haken bei "Als Digitalausgang verwenden" nicht entfernt. Das muss bei Ansage eines Textes mit dem Parameter <v> (Übernahme eines Wertes aus Loxone) durchgeführt werden. Wenn kein Wert ausgegeben werden soll muss der Haken bleiben.
+  * Im virtuellen Ausgang ist der Haken bei "Verbindung nach Senden schließen" nicht gesetzt
+  * Die Ansage erfolgt basierend auf einer Textgenerierung aus einem Stausbaustein heraus. Hierzu weiter oben im Wiki unter //Einzel-/Gruppendurchsagen aus einem Statusbaustein heraus// nachschauen.
+
+ [[https://loxwiki.atlassian.net/wiki/pages/resumedraft.action?draftId=1193708001|Go to Top]]
+
+\\
+
+
+Wer Fehler im How-to findet darf sie gerne behalten oder selber korrigieren {{images/icons/emoticons/smile.png?16x16|(Lächeln)}}
+
+===== Verwandte Artikel =====
+
+<HTML><ul></HTML>
+<HTML><li></HTML>Seite:
+
+[[wiki/spaces/LOXBERRY/pages/1228539438/T2S+Durchsagen|T2S Durchsagen]]
+<HTML></li></HTML>
+<HTML><li></HTML>Seite:
+
+[[wiki/spaces/LOXBERRY/pages/1269958434/Worx+Landroid+via+FHEM+und+MQTT+via+LoxBerry+an+den+Loxone+Miniserver+anbinden|Worx Landroid via FHEM und MQTT via LoxBerry an den Loxone Miniserver anbinden]]
+<HTML></li></HTML>
+<HTML><li></HTML>Seite:
+
+[[wiki/spaces/LOXBERRY/pages/1193706043/Text2SIP|Text2SIP]]
+<HTML></li></HTML>
+<HTML><li></HTML>Seite:
+
+[[wiki/spaces/LOXBERRY/pages/1250755184|FHEM Geräte per MQTT steuern]]
+<HTML></li></HTML><HTML></ul></HTML>
+
+\\
+
+
+\\
+
+
+\\
+
+
+\\
+
+
+\\
+
+
+\\
+
+
+\\
+
+
+\\
+
+
+\\
+
+
+\\
+
+
+
+===== Attachments: =====
+
+
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707980.png|icon_64.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707992.png|fetch sonos.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707985.png|image2016-12-19 21:21:2.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707991.png|image2016-12-22 10:46:35.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707981.png|image2016-12-27 23:44:24.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707983.png|image2016-12-19 20:52:11.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707987.png|image2016-12-22 17:27:59.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707988.jpg|ausgang.jpg]] (image/jpeg)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707984.png|image2016-12-19 21:10:26.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707986.png|image2016-12-19 22:8:33.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707990.png|image2017-1-3 20:49:2.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707989.png|image2017-1-3 20:43:1.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707982.png|image2016-12-19 20:49:0.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707996.png|image2016-12-22 9:21:51.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707993.png|image2016-12-29 13:15:13.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707995.png|image2016-12-22 9:20:56.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193708000.png|image2016-12-22 9:29:45.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707997.png|image2016-12-22 9:22:27.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707994.png|image2016-12-22 9:20:7.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707999.png|image2016-12-22 9:27:4.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193707998.jpg|UDP Daten.jpg]] (image/jpeg)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193708562.png|image2017-1-22 20:7:13.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193708563.png|image2017-1-22 20:8:31.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193708769.png|image2017-1-29 20:33:52.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1193708997.png|image2017-2-7 23:5:11.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1197146137.png|image2017-3-4 15:20:9.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1197146164.png|image2017-3-5 12:36:42.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1198621767.png|image2017-6-26 14:0:9.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1201275956.png|Terminal.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1203863555.png|image2017-10-17 11:34:37.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1205240138.png|image2017-11-30 21:20:23.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1205240147.png|image2017-12-1 0:26:44.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1205240148.png|image2017-12-1 0:27:28.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1205240150.png|image2017-12-1 0:29:43.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1205240233.png|image2017-12-3 16:34:35.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1205240236.txt|new 1.txt]] (text/plain)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1207501289.jpg|1.JPG]] (image/jpeg)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1207501290.jpg|2.JPG]] (image/jpeg)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1207501291.jpg|3.JPG]] (image/jpeg)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1207501292.jpg|4.JPG]] (image/jpeg)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1207501293.jpg|5.JPG]] (image/jpeg)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1207501284.jpg|1.JPG]] (image/jpeg)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1207501285.jpg|2.JPG]] (image/jpeg)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1207501286.jpg|3.JPG]] (image/jpeg)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1207501287.jpg|4.JPG]] (image/jpeg)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1207501288.jpg|5.JPG]] (image/jpeg)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1207501769.png|image2018-2-7_22-0-17.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1207501770.png|image2018-2-7_22-9-5.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1207501771.png|image2018-2-7_22-11-31.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1209204928.zip|sonos4lox_V2.1.6.zip]] (application/zip)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1209205423.jpeg|Fehlermeldung Loxberry.jpeg]] (image/jpeg)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1209205535.png|20180312_Sonos4Loxone_Fehler.PNG]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1219757129.loxone|Sonos.Loxone]] (application/octet-stream)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1209205608.png|image2018-3-15_15-23-4.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1211170819.png|image2018-3-26_23-16-58.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1211170820.png|image2018-3-26_23-18-11.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1211170822.png|image2018-3-26_23-24-21.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1209205603.loxone|Sonos.Loxone]] (application/octet-stream)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1219757702.png|image2018-11-14_22-43-42.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1236862217.log|sonos.log]] (text/plain)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1225589518.png|1.PNG]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1228539226.png|image2019-02-20.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1228539788.pdf|DOKU-Alt-Sonos4Loxone.pdf]] (application/pdf)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1228539800.png|loxson1.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1228539807.png|loxson2.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1231422106.png|Main_2.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1231422107.png|Main_3.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1231422171.png|Sonos_1.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1231422172.png|Sonos_2.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1231423176.png|Unbenannt.PNG]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1231423175.png|Unbenannt.PNG]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1236862090|'sonos.log']] (application/octet-stream)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1219757955.log|sonos.log]] (text/plain)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1244333698.png|image.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1244333908.url|Radio Favoriten für Tasterbedienung.url]] (application/octet-stream)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1247773392.png|image2020-3-7_11-46-37.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1247773393.png|image2020-3-7_11-47-39.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1254686732.log|nSei758gZ7.log]] (text/plain)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1261174776.png|image2020-11-15_11-39-13.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1262551722.png|image2020-12-30_17-17-16.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1262551723.png|image2020-12-30_17-18-36.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1262551724.png|image2020-12-30_17-20-10.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1262551751.png|image2020-12-31_11-45-15.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1262551753.png|image2020-12-31_11-59-53.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1268482273.jpg|Loxberry_2.jpg]] (image/jpeg)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1268482272.jpg|Loxone_TTS.jpg]] (image/jpeg)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1268482274.jpg|Pfad.jpg]] (image/jpeg)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1269956707.png|image2021-2-15_21-15-47.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1690927128.png|Screenshot_3.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1691025409.png|Screenshot_4.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1690927133.png|Screenshot_5.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1690894341.png|Screenshot_6.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1690599703.png|Screenshot_7.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1691090948.png|Screenshot_8.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1691123716.png|Screenshot_9.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1702068225.png|Screenshot_10.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1701969922.png|Screenshot_11.png]] (image/png)\\
+{{images/icons/bullet_blue.gif?8x8}} [[attachments/1193708001/1711734817.png|Screenshot_12.png]] (image/png)\\
+
+
+
+
+
+Document generated by Confluence on 31. Aug., 2022 20:15
+
+[[http://www.atlassian.com/|Atlassian]]
+
+
+
