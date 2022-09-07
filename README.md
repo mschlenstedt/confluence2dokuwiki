@@ -69,7 +69,31 @@ The script will create two new folders: _pages_ and _media_. These are the folde
 
 ### Adjustments
 
-You can slightly adjust the behaviour of the converting script. Open the script in an text editor of your choice and adjust the options at the very beginning of the script.
+You can slightly adjust the behaviour of the converting script. Open the script in an text editor of your choice and adjust the options at the very beginning of the script. The options should be more or less self explaining.
 
+```
+##############################################################
+# START Settings
+##############################################################
+
+# Remove Confluence Footer created by Confluence Export routine
+my $remove_footer = 1;
+
+# Remove "Created by..." created by Confluence Export routine
+my $remove_createdby = 1;
+
+# Remove Confluence Table of Contents
+my $remove_toc = 1;
+
+# Table of Contents Section Name
+my $tocname = "Inhalt";
+
+# Remove Attachement Section created by Confluence Export routine
+my $remove_attachementsec = 1;
+
+##############################################################
+# END Settings
+##############################################################
+```
 
 
