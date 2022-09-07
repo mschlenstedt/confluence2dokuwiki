@@ -401,6 +401,7 @@ if ($correct_internal_links) {;
 				$linkline1_ =~ s/\n//;
 				my @fields1 = split (/\|/, $linkline1);
 					foreach (@pagelines) {
+						@fields1[2] =~ s/\.txt$//;
 						$_ =~ s/@fields1[1]/@fields1[2]/g;
 						$_ =~ s/\n//g;
 					}
